@@ -83,6 +83,7 @@ func main() {
 	var err error
 	switch {
 	case args.CommandPng != nil:
+		err = runCmdPng(args)
 	case args.CommandChr != nil:
 		err = runCmdChr(args)
 	case args.CommandPal != nil:
@@ -94,6 +95,33 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+func runCmdPng(args *Arguments) error {
+	infile, err := os.Open(args.CommandPng.Input)
+	if err != nil {
+		return err
+	}
+	defer infile.Close()
+
+	pngImage, _, err := image.Decode(infile)
+	if err != nil {
+		return fmt.Errorf("DecodeConfig error: %w", err)
+	}
+
+	ti, err := snesimg.NewTiledImageFromImage(
+		snesimg.CS_8x8, snesimg.BD_4bpp, snesimg.DefaultPal_4bpp, pngImage)
+	if err != nil {
+		return err
+	}
+
+	outfile, err := os.Create(args.CommandPng.Output)
+	if err != nil {
+		return err
+	}
+	defer outfile.Close()
+
+	return png.Encode(outfile, ti)
 }
 
 func runCmdChr(args *Arguments) error {

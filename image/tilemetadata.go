@@ -60,6 +60,26 @@ func (tm *TileMetadata) At(x, y int) color.Color {
 	panic("no tile data in metatile")
 }
 
+func (tm *TileMetadata) ColorIndexAt(x, y int) uint8 {
+	if tm.Tile8 != nil {
+		return tm.Tile8.ColorIndexAt(x, y)
+	}
+
+	if tm.Tile16 != nil {
+		row := y / 8
+		col := x / 8
+		return tm.Tile16[(row*2)+col].ColorIndexAt(x%8, y%8)
+	}
+
+	if tm.TileWide != nil {
+		//row := y / 8
+		col := x / 8
+		return tm.TileWide[col].ColorIndexAt(x%8, y%8)
+	}
+
+	panic("no tile data in metatile")
+}
+
 func (tm *TileMetadata) Set(x, y int, c color.Color) {
 	if tm.Tile8 != nil {
 		tm.Tile8.Set(x, y, c)
@@ -77,6 +97,29 @@ func (tm *TileMetadata) Set(x, y int, c color.Color) {
 		//row := y / 8
 		col := x / 8
 		tm.TileWide[col].Set(x%8, y%8, c)
+		return
+	}
+
+	panic("no tile data in metatile")
+}
+
+func (tm *TileMetadata) SetColorIndex(x, y int, idx uint8) {
+	if tm.Tile8 != nil {
+		tm.Tile8.SetColorIndex(x, y, idx)
+		return
+	}
+
+	if tm.Tile16 != nil {
+		row := y / 8
+		col := x / 8
+		tm.Tile16[(row*2)+col].SetColorIndex(x%8, y%8, idx)
+		return
+	}
+
+	if tm.TileWide != nil {
+		//row := y / 8
+		col := x / 8
+		tm.TileWide[col].SetColorIndex(x%8, y%8, idx)
 		return
 	}
 

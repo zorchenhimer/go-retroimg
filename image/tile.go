@@ -7,15 +7,6 @@ import (
 	"hash/crc32"
 )
 
-type BitDepth int
-
-const (
-	BD_2bpp BitDepth = iota
-	BD_4bpp
-	BD_8bpp
-	BD_DirectColor
-)
-
 // Tiles are always 8x8 pixels.
 type Tile struct {
 	image.Paletted
