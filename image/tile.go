@@ -20,14 +20,13 @@ const (
 type Tile struct {
 	image.Paletted
 
-	Id      int
 	Depth   BitDepth
 
 	hash      string
 	dirtyHash bool
 }
 
-func NewTile(id int, depth BitDepth, palette color.Palette) *Tile {
+func NewTile(depth BitDepth, palette color.Palette) *Tile {
 	//depth := BD_DirectColor
 	//switch len(color.Palette) {
 	//case 4:
@@ -45,7 +44,6 @@ func NewTile(id int, depth BitDepth, palette color.Palette) *Tile {
 			Rect:    image.Rect(0, 0, 8, 8),
 			Palette: palette,
 		},
-		Id:    id,
 		Depth: depth,
 
 		dirtyHash: true,

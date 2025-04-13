@@ -20,18 +20,18 @@ func NewTileMetadata(cs CharSize, depth BitDepth, pal color.Palette) TileMetadat
 	tm := TileMetadata{}
 	switch cs {
 	case CS_8x8:
-		tm.Tile8 = NewTile(0, depth, pal)
+		tm.Tile8 = NewTile(depth, pal)
 	
 	case CS_16x16:
 		tm.Tile16 = make([]*Tile, 4)
 		for i := 0; i < 4; i++ {
-			tm.Tile16[i] = NewTile(0, depth, pal)
+			tm.Tile16[i] = NewTile(depth, pal)
 		}
 
 	case CS_16x8:
 		tm.TileWide = make([]*Tile, 2)
 		for i := 0; i < 2; i++ {
-			tm.TileWide[i] = NewTile(0, depth, pal)
+			tm.TileWide[i] = NewTile(depth, pal)
 		}
 	default:
 		panic("no")
