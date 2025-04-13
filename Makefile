@@ -10,4 +10,4 @@ clean:
 	-rm $(PROGS)
 
 bin/%: cmd/%.go
-	go build -o $< $^
+	go build -o $@ $^
