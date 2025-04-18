@@ -1,12 +1,14 @@
 package image
 
 import (
-	//"fmt"
+	"fmt"
 	"image/color"
+	"strings"
 	//"math"
 )
 
 var (
+	DefaultPal_1bpp color.Palette
 	DefaultPal_2bpp color.Palette
 	DefaultPal_4bpp color.Palette
 	DefaultPal_8bpp color.Palette
@@ -15,13 +17,38 @@ var (
 type BitDepth int
 
 const (
-	BD_2bpp BitDepth = iota
+	BD_1bpp BitDepth = iota
+	BD_2bpp
 	BD_4bpp
 	BD_8bpp
 	BD_DirectColor
 )
 
+func (bd *BitDepth) UnmarshalText(b []byte) error {
+	switch strings.ToLower(strings.TrimSpace(string(b))) {
+	case "1":
+		*bd = BD_1bpp
+	case "2":
+		*bd = BD_2bpp
+	case "4":
+		*bd = BD_4bpp
+	case "8":
+		*bd = BD_8bpp
+	case "d":
+		*bd = BD_DirectColor
+	default:
+		return fmt.Errorf("Invalid bit depth value: %q", string(b))
+	}
+
+	return nil
+}
+
 func init() {
+	DefaultPal_1bpp = color.Palette{
+		color.Gray{0x00},
+		color.Gray{0xFF},
+	}
+
 	DefaultPal_2bpp = color.Palette{
 		color.Gray{0x00},
 		color.Gray{0x55},
