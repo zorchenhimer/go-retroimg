@@ -1,6 +1,7 @@
 
 PROGS=\
-	bin/snes-img
+	  bin/img2chr
+	#bin/snes-img
 
 all: bin/ $(PROGS)
 bin/:
@@ -9,5 +10,5 @@ bin/:
 clean:
 	-rm $(PROGS)
 
-bin/%: cmd/%.go
-	go build -o $@ $^
+bin/%: cmd/%.go image/*.go
+	go build -o $@ $<
