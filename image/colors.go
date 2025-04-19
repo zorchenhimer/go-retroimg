@@ -43,6 +43,23 @@ func (bd *BitDepth) UnmarshalText(b []byte) error {
 	return nil
 }
 
+func (bd BitDepth) String() string {
+	switch bd {
+	case BD_1bpp:
+		return "BD_1bpp"
+	case BD_2bpp:
+		return "BD_2bpp"
+	case BD_4bpp:
+		return "BD_4bpp"
+	case BD_8bpp:
+		return "BD_8bpp"
+	case BD_DirectColor:
+		return "BD_DirectColor"
+	default:
+		return "UNKNOWN"
+	}
+}
+
 func init() {
 	DefaultPal_1bpp = color.Palette{
 		color.Gray{0x00},

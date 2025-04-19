@@ -2,14 +2,18 @@ package image
 
 import (
 	"image"
+	"io"
 	"fmt"
 	"image/color"
+	"strconv"
+	"strings"
+	"bytes"
 )
 
 var _ image.PalettedImage = &TiledImage{}
 
 type TiledImage struct {
-	Tiles   []TileMetadata
+	Tiles   []*Tile
 	TileIds []int
 
 	// 8x8 or 16x16 "tiles".  Actual tiles are always 8x8, but 16x16 acts as a
@@ -34,6 +38,8 @@ func NewTiledImage(r image.Rectangle, cs CharSize, depth BitDepth, pal color.Pal
 	var palSize int
 
 	switch depth {
+	case BD_1bpp:
+		palSize = 2
 	case BD_2bpp:
 		palSize = 4
 	case BD_4bpp:
@@ -59,17 +65,17 @@ func NewTiledImage(r image.Rectangle, cs CharSize, depth BitDepth, pal color.Pal
 	}
 
 	mdSize := (r.Max.X/width)*(r.Max.Y/height)
-	md := make([]TileMetadata, mdSize)
+	tiles := make([]*Tile, mdSize)
 	ids := []int{}
 
 	for i := 0; i < mdSize; i++ {
-		md[i] = NewTileMetadata(cs, depth, pal)
+		tiles[i] = NewTile(depth, pal)
 		ids = append(ids, i)
 	}
 
 
 	return &TiledImage{
-		Tiles:         md,
+		Tiles:         tiles,
 		CharacterSize: cs,
 		Palette:       pal,
 		BitDepth:      depth,
@@ -117,14 +123,6 @@ func NewTiledImageFromImage(cs CharSize, depth BitDepth, pal color.Palette, img 
 	}
 
 	return ti, nil
-}
-
-func (ti *TiledImage) RemoveDuplicates() *TiledImage {
-	panic("not yet")
-}
-
-func (ti *TiledImage) RemoveEmpty() *TiledImage {
-	panic("not yet")
 }
 
 func (ti *TiledImage) Bounds() image.Rectangle {
@@ -195,4 +193,34 @@ func (ti *TiledImage) SetColorIndex(x, y int, idx uint8) {
 
 func (ti *TiledImage) ColorModel() color.Model {
 	return ti.Palette
+}
+
+func (ti *TiledImage) binary() [][]byte {
+	ret := [][]byte{}
+	for _, tile := range ti.Tiles {
+		ret = append(ret, tile.binary())
+	}
+	return ret
+}
+
+func (ti *TiledImage) WriteAsm(w io.Writer) error {
+	tiles := ti.binary()
+	for _, tile := range tiles {
+		vals := []string{}
+		for _, b := range tile {
+			vals = append(vals, strconv.Itoa(int(b)))
+		}
+
+		_, err := fmt.Fprintf(w, ".byte %s\n", strings.Join(vals, ", "))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (ti *TiledImage) WriteBin(w io.Writer) error {
+	tiles := ti.binary()
+	_, err := w.Write(bytes.Join(tiles, []byte{}))
+	return err
 }
