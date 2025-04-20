@@ -26,15 +26,15 @@ const (
 
 func (bd *BitDepth) UnmarshalText(b []byte) error {
 	switch strings.ToLower(strings.TrimSpace(string(b))) {
-	case "1":
+	case "1", "1bpp":
 		*bd = BD_1bpp
-	case "2":
+	case "2", "2bpp":
 		*bd = BD_2bpp
-	case "4":
+	case "4", "4bpp":
 		*bd = BD_4bpp
-	case "8":
+	case "8", "8bpp":
 		*bd = BD_8bpp
-	case "d":
+	case "d", "direct", "directcolor":
 		*bd = BD_DirectColor
 	default:
 		return fmt.Errorf("Invalid bit depth value: %q", string(b))

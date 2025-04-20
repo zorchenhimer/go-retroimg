@@ -24,7 +24,7 @@ type Arguments struct {
 	// 1bpp=2, 2bpp=4, 4bpp=16, 8bpp=256, D=2047 max (maybe)
 	// 1bpp is a special case meant for text.  This will have to be inflated to
 	// 2bpp in the ROM software.
-	BitDepth snesimg.BitDepth `arg:"--color-mode,-c" default:"2" help:"Bits per pixel. Accepted values are 1, 2, 4, & 8."`
+	BitDepth snesimg.BitDepth `arg:"--bit-depth,-d" default:"2" help:"Bits per pixel. Accepted values are 1, 2, 4, & 8 or 1bpp, 2bpp, 4bpp, & 8bpp."`
 
 	AsmOutput bool `arg:"--asm-out"`
 }
