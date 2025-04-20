@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"image/color"
 	"os"
 
 	_ "image/png"
@@ -53,18 +52,9 @@ func run(args *Arguments) error {
 		return err
 	}
 
-	var pal color.Palette
-	switch args.BitDepth {
-	case snesimg.BD_1bpp:
-		pal = snesimg.DefaultPal_1bpp
-	case snesimg.BD_2bpp:
-		pal = snesimg.DefaultPal_2bpp
-	case snesimg.BD_4bpp:
-		pal = snesimg.DefaultPal_4bpp
-	case snesimg.BD_8bpp:
-		pal = snesimg.DefaultPal_8bpp
-	default:
-		return fmt.Errorf("DirectColor not supported yet")
+	pal, err := args.BitDepth.DefaultPalette()
+	if err != nil {
+		return err
 	}
 
 	fmt.Println("BitDepth:", args.BitDepth)

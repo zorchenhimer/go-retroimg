@@ -24,6 +24,72 @@ const (
 	BD_DirectColor
 )
 
+func (bd BitDepth) DefaultPalette() (color.Palette, error) {
+	var pal color.Palette
+	var err error
+
+	switch bd {
+	case BD_1bpp:
+		pal = DefaultPal_1bpp
+	case BD_2bpp:
+		pal = DefaultPal_2bpp
+	case BD_4bpp:
+		pal = DefaultPal_4bpp
+	case BD_8bpp:
+		pal = DefaultPal_8bpp
+	case BD_DirectColor:
+		err = fmt.Errorf("DirectColor not implemented yet")
+	default:
+		err = fmt.Errorf("Unsupported bit depth")
+	}
+
+	return pal, err
+}
+
+func (bd BitDepth) PlaneCount() (int, error) {
+	var numPlanes int
+	var err error
+
+	switch bd {
+	case BD_1bpp:
+		numPlanes = 1
+	case BD_2bpp:
+		numPlanes = 2
+	case BD_4bpp:
+		numPlanes = 4
+	case BD_8bpp:
+		numPlanes = 8
+	case BD_DirectColor:
+		err = fmt.Errorf("DirectColor not implemented yet")
+	default:
+		err = fmt.Errorf("Unsupported bit depth")
+	}
+
+	return numPlanes, err
+}
+
+func (bd BitDepth) NumberColors() (int, error) {
+	var num int
+	var err error
+
+	switch bd {
+	case BD_1bpp:
+		num = 2
+	case BD_2bpp:
+		num = 4
+	case BD_4bpp:
+		num = 16
+	case BD_8bpp:
+		num = 256
+	case BD_DirectColor:
+		err = fmt.Errorf("DirectColor not implemented yet")
+	default:
+		err = fmt.Errorf("Unsupported bit depth")
+	}
+
+	return num, err
+}
+
 func (bd *BitDepth) UnmarshalText(b []byte) error {
 	switch strings.ToLower(strings.TrimSpace(string(b))) {
 	case "1", "1bpp":
