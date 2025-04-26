@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 	"bytes"
-	"bufio"
-	"errors"
 )
 
 var _ image.PalettedImage = &TiledImage{}

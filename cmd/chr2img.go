@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"image/color"
 	"image/png"
 	"image/jpeg"
 	"image/gif"
@@ -23,6 +24,8 @@ type Arguments struct {
 	// 1bpp is a special case meant for text.  This will have to be inflated to
 	// 2bpp in the ROM software.
 	BitDepth snesimg.BitDepth `arg:"--bit-depth,-d" default:"2" help:"Bits per pixel. Accepted values are 1, 2, 4, & 8 or 1bpp, 2bpp, 4bpp, & 8bpp."`
+
+	PaletteFile string `arg:"--pal-file" help:"Read palette colors from this text file.  One color per line in HTML color syntax (eg #00AA55)."`
 }
 
 func main() {
@@ -36,14 +39,38 @@ func main() {
 }
 
 func run(args *Arguments) error {
-	pal, err := args.BitDepth.DefaultPalette()
-	if err != nil {
-		return err
+	var pal color.Palette
+	var err error
+
+	if args.PaletteFile != "" {
+		palfile, err := os.Open(args.PaletteFile)
+		if err != nil {
+			return err
+		}
+
+		pal, err = snesimg.ReadTextPalettes(palfile)
+		palfile.Close()
+		if err != nil {
+			return err
+		}
+
+	} else {
+		pal, err = args.BitDepth.DefaultPalette()
+		if err != nil {
+			return err
+		}
 	}
 
 	numColors, err := args.BitDepth.NumberColors()
 	if err != nil {
 		return err
+	}
+
+
+	if len(pal) < numColors {
+		return fmt.Errorf("BitDepth of %s requires %d colors but palette only has %d", args.BitDepth, numColors, len(pal))
+	} else if len(pal) > numColors {
+		pal = pal[:numColors]
 	}
 
 	input, err := os.Open(args.Input)
@@ -52,10 +79,6 @@ func run(args *Arguments) error {
 	}
 	defer input.Close()
 
-	//ti, err := snesimg.NewTiledImageFromChr(args.BitDepth, pal, input)
-	//if err != nil {
-	//	return fmt.Errorf("Error reading CHR data: %w", err)
-	//}
 	raw := snesimg.NewRawChr(input)
 	tiles, err := raw.ReadAllTiles(args.BitDepth)
 	if err != nil {
