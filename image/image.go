@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"bytes"
+	"bufio"
+	"errors"
 )
 
 var _ image.PalettedImage = &TiledImage{}
@@ -125,18 +127,27 @@ func NewTiledImageFromImage(cs CharSize, depth BitDepth, pal color.Palette, img 
 	return ti, nil
 }
 
-func (ti *TiledImage) Bounds() image.Rectangle {
-	return ti.bounds
-}
-
-func (ti *TiledImage) Image() image.Image {
-	img := image.NewRGBA(ti.Bounds())
-	for y := 0; y < ti.bounds.Max.Y; y++ {
-		for x := 0; x < ti.bounds.Max.X; x++ {
-			img.Set(x, y, ti.At(x, y))
+func NewTiledImageFromTiles(depth BitDepth, pal color.Palette, tiles []*Tile) *TiledImage {
+	padding := len(tiles) % 16
+	if padding > 0 {
+		for i := 0; i < padding; i++ {
+			tiles = append(tiles, NewTile(depth, pal))
 		}
 	}
-	return img
+
+	height := len(tiles) / 16
+
+	return &TiledImage{
+		Tiles: tiles,
+		CharacterSize: CS_8x8,
+		Palette: pal,
+		BitDepth: depth,
+		bounds: image.Rect(0, 0, 16*8, height*8),
+	}
+}
+
+func (ti *TiledImage) Bounds() image.Rectangle {
+	return ti.bounds
 }
 
 func (ti *TiledImage) At(x, y int) color.Color {

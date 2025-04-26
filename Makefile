@@ -1,6 +1,7 @@
 
 PROGS=\
-	  bin/img2chr
+	  bin/img2chr \
+	  bin/chr2img
 	#bin/snes-img
 
 all: bin/ $(PROGS)

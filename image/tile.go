@@ -19,16 +19,6 @@ type Tile struct {
 }
 
 func NewTile(depth BitDepth, palette color.Palette) *Tile {
-	//depth := BD_DirectColor
-	//switch len(color.Palette) {
-	//case 4:
-	//	depth = BD_2bpp
-	//case 16:
-	//	depth = BD_4bpp
-	//case 256:
-	//	depth = BD_8bpp
-	//}
-
 	return &Tile{
 		Paletted: image.Paletted{
 			Pix:     make([]uint8, 64),
@@ -40,6 +30,46 @@ func NewTile(depth BitDepth, palette color.Palette) *Tile {
 
 		dirtyHash: true,
 	}
+}
+
+func NewTileFromPlanes(planes [][]byte) (*Tile, error) {
+	var depth BitDepth
+
+	switch len(planes) {
+	case 1:
+		depth = BD_1bpp
+	case 2:
+		depth = BD_2bpp
+	case 4:
+		depth = BD_4bpp
+	case 8:
+		depth = BD_8bpp
+	default:
+		return nil, fmt.Errorf("%d bit planes not supported", len(planes))
+	}
+
+	pal, _ := depth.DefaultPalette()
+	tile := NewTile(depth, pal)
+
+	for y := 0; y < 8; y++ {
+		row := make([]byte, 8)
+
+		for p := 0; p < len(planes); p++ {
+			for x := 0; x < 8; x++ {
+				bit := planes[p][y] & 0x01
+				planes[p][y] = planes[p][y] >> 1
+				//bit = bit << x
+				row[7-x] = (row[7-x] << 1) | bit
+			}
+		}
+
+		for x := 0; x < 8; x++ {
+			tile.Pix[(y*8)+x] = uint8(row[x])
+		}
+
+	}
+
+	return tile, nil
 }
 
 func (this *Tile) IsIdentical(other *Tile) bool {
