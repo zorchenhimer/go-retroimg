@@ -79,9 +79,7 @@ func run(args *Arguments) error {
 			parts[i] = strings.TrimLeft(parts[i], "$")
 		}
 
-		// FIXME: i think the colors in Nes_2C02 are ordered
-		//        incorrectly.
-		pal = palettes.Nes_2C02.NesPalette(parts[0], parts[2], parts[1], parts[3])
+		pal = palettes.Nes_2C02.NesPalette(parts[0], parts[1], parts[2], parts[3])
 		fmt.Println(pal)
 
 	} else {
