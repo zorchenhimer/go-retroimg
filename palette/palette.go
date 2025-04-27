@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strconv"
 	"bufio"
-
+	"regexp"
 )
 
 type ColorMap map[string]color.Color
@@ -105,6 +105,9 @@ func readRawRGB(r io.Reader) (color.Palette, error) {
 	return pal, err
 }
 
+// R G B Name
+var re_gimpLine = regexp.MustCompile(`^\s*(\d+)\s+(\d+)\s+(\d+)`)
+
 func readGimp(r io.Reader) (color.Palette, error) {
 	var pal color.Palette
 
@@ -124,22 +127,22 @@ func readGimp(r io.Reader) (color.Palette, error) {
 			continue
 		}
 
-		parts := strings.Split(line, "\t")
-		if len(parts) < 3 {
+		matches := re_gimpLine.FindStringSubmatch(line)
+		if len(matches) == 0 {
 			return pal, fmt.Errorf("Bad palette line: %q", line)
 		}
 
-		red, err := strconv.Atoi(parts[0])
+		red, err := strconv.Atoi(matches[1])
 		if err != nil {
 			return pal, err
 		}
 
-		green, err := strconv.Atoi(parts[1])
+		green, err := strconv.Atoi(matches[2])
 		if err != nil {
 			return pal, err
 		}
 
-		blue, err := strconv.Atoi(parts[2])
+		blue, err := strconv.Atoi(matches[3])
 		if err != nil {
 			return pal, err
 		}
