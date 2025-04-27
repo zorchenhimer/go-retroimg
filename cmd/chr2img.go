@@ -13,7 +13,7 @@ import (
 	"github.com/alexflint/go-arg"
 
 	snesimg "github.com/zorchenhimer/go-retroimg"
-	"github.com/zorchenhimer/go-retroimg/palettes"
+	"github.com/zorchenhimer/go-retroimg/palette"
 )
 
 type Arguments struct {
@@ -51,13 +51,7 @@ func run(args *Arguments) error {
 	}
 
 	if args.PaletteFile != "" {
-		palfile, err := os.Open(args.PaletteFile)
-		if err != nil {
-			return err
-		}
-
-		pal, err = snesimg.ReadTextPalettes(palfile)
-		palfile.Close()
+		pal, err = palette.FromFile(args.PaletteFile, palette.PF_Gimp)
 		if err != nil {
 			return err
 		}
@@ -79,7 +73,7 @@ func run(args *Arguments) error {
 			parts[i] = strings.TrimLeft(parts[i], "$")
 		}
 
-		pal = palettes.Nes_2C02.NesPalette(parts[0], parts[1], parts[2], parts[3])
+		pal = palette.Nes_2C02.NesPalette(parts[0], parts[1], parts[2], parts[3])
 		fmt.Println(pal)
 
 	} else {

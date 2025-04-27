@@ -10,5 +10,5 @@ bin/:
 clean:
 	-rm $(PROGS)
 
-bin/%: cmd/%.go *.go palettes/*.go
+bin/%: cmd/%.go *.go palette/*.go
 	go build -o $@ $<
