@@ -1,4 +1,5 @@
 bin/
+misc/
 
 *.aseprite
 *.asm

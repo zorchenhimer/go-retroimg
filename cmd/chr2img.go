@@ -13,6 +13,7 @@ import (
 	"github.com/alexflint/go-arg"
 
 	snesimg "github.com/zorchenhimer/go-snes/image"
+	"github.com/zorchenhimer/go-snes/image/palettes"
 )
 
 type Arguments struct {
@@ -24,6 +25,9 @@ type Arguments struct {
 	// 1bpp is a special case meant for text.  This will have to be inflated to
 	// 2bpp in the ROM software.
 	BitDepth snesimg.BitDepth `arg:"--bit-depth,-d" default:"2" help:"Bits per pixel. Accepted values are 1, 2, 4, & 8 or 1bpp, 2bpp, 4bpp, & 8bpp."`
+
+	// --nes-pal 0F,00,1A,20
+	NesPal string `arg:"--nes-pal"`
 
 	PaletteFile string `arg:"--pal-file" help:"Read palette colors from this text file.  One color per line in HTML color syntax (eg #00AA55)."`
 }
@@ -42,6 +46,10 @@ func run(args *Arguments) error {
 	var pal color.Palette
 	var err error
 
+	if args.PaletteFile != "" && args.NesPal != "" {
+		return fmt.Errorf("Cannot use both --nes-pal and --pal-file")
+	}
+
 	if args.PaletteFile != "" {
 		palfile, err := os.Open(args.PaletteFile)
 		if err != nil {
@@ -53,6 +61,28 @@ func run(args *Arguments) error {
 		if err != nil {
 			return err
 		}
+
+	} else if args.NesPal != "" {
+		if args.BitDepth != snesimg.BD_2bpp {
+			return fmt.Errorf("Can only use --nes-pal with a 2bpp image")
+		}
+
+		parts := strings.Split(args.NesPal, ",")
+		if len(parts) < 4 {
+			return fmt.Errorf("Too few colors")
+		}
+		if len(parts) > 4 {
+			return fmt.Errorf("Too many colors")
+		}
+
+		for i := 0; i < len(parts); i++ {
+			parts[i] = strings.TrimLeft(parts[i], "$")
+		}
+
+		// FIXME: i think the colors in Nes_2C02 are ordered
+		//        incorrectly.
+		pal = palettes.Nes_2C02.NesPalette(parts[0], parts[2], parts[1], parts[3])
+		fmt.Println(pal)
 
 	} else {
 		pal, err = args.BitDepth.DefaultPalette()
