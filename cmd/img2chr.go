@@ -12,7 +12,7 @@ import (
 
 	"github.com/alexflint/go-arg"
 
-	snesimg "github.com/zorchenhimer/go-snes/image"
+	snesimg "github.com/zorchenhimer/go-retroimg"
 )
 
 type Arguments struct {

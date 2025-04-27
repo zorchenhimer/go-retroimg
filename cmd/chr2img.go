@@ -12,8 +12,8 @@ import (
 
 	"github.com/alexflint/go-arg"
 
-	snesimg "github.com/zorchenhimer/go-snes/image"
-	"github.com/zorchenhimer/go-snes/image/palettes"
+	snesimg "github.com/zorchenhimer/go-retroimg"
+	"github.com/zorchenhimer/go-retroimg/palettes"
 )
 
 type Arguments struct {

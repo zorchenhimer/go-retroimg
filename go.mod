@@ -1,4 +1,4 @@
-module github.com/zorchenhimer/go-snes
+module github.com/zorchenhimer/go-retroimg
 
 go 1.24.1
 
