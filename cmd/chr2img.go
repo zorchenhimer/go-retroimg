@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"image/color"
 	"image/png"
 	"image/jpeg"
 	"image/gif"
 	"os"
 	"strings"
+	"strconv"
 	"path/filepath"
 
 	"github.com/alexflint/go-arg"
@@ -30,6 +32,11 @@ type Arguments struct {
 	NesPal string `arg:"--nes-pal"`
 
 	PaletteFile string `arg:"--pal-file" help:"Read palette colors from this text file.  One color per line in HTML color syntax (eg #00AA55)."`
+
+	StartOffset string `arg:"--start"`
+	startOffset int
+	TileCount string `arg:"--tile-count"`
+	tileCount int
 }
 
 func main() {
@@ -101,13 +108,53 @@ func run(args *Arguments) error {
 	}
 	defer input.Close()
 
+	if args.StartOffset != "" {
+		offset, err := strconv.ParseInt(args.StartOffset, 0, 32)
+		if err != nil {
+			return err
+		}
+
+		_, err = input.Seek(offset, io.SeekStart)
+		if err != nil {
+			return fmt.Errorf("Seek() error: %w", err)
+		}
+	}
+
 	raw := snesimg.NewRawChr(input)
-	tiles, err := raw.ReadAllTiles(args.BitDepth)
-	if err != nil {
-		return err
+
+	var tiles []*snesimg.Tile
+	if args.TileCount != "" {
+		count, err := strconv.ParseInt(args.TileCount, 0, 32)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("count:", count)
+
+		for i := 0; i < int(count); i++ {
+			t, err := raw.ReadTile(args.BitDepth)
+			if err != nil {
+				//return err
+				fmt.Printf("read tile err: %s\n", err)
+				break
+			}
+			tiles = append(tiles, t)
+		}
+	} else {
+		tiles, err = raw.ReadAllTiles(args.BitDepth)
+		if err != nil {
+			return err
+		}
 	}
 
 	img := snesimg.NewTiledImageFromTiles(args.BitDepth, pal, tiles)
+	fmt.Printf("Bounds: %#v\n", img.Bounds())
+	fmt.Println("len(tiles):", len(tiles))
+
+	args.Output = strings.ReplaceAll(args.Output, "{start}", args.StartOffset)
+	args.Output = strings.ReplaceAll(args.Output, "{count}", args.TileCount)
+	args.Output = strings.ReplaceAll(args.Output, "{bpp}", args.BitDepth.String())
+	fmt.Println("output:", args.Output)
 
 	output, err := os.Create(args.Output)
 	if err != nil {
