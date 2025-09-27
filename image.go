@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"bytes"
+	"math"
 )
 
 var _ image.PalettedImage = &TiledImage{}
@@ -133,7 +134,7 @@ func NewTiledImageFromTiles(depth BitDepth, pal color.Palette, tiles []*Tile) *T
 		}
 	}
 
-	height := len(tiles) / 16
+	height := int(math.Ceil(float64(len(tiles)) / float64(16)))
 
 	return &TiledImage{
 		Tiles: tiles,
@@ -170,8 +171,12 @@ func (ti *TiledImage) ColorIndexAt(x, y int) uint8 {
 	ty  := y % height
 
 	tileWidth := ti.bounds.Max.X/width
+	idx := (row*tileWidth)+col
+	if idx >= len(ti.Tiles) {
+		return 0
+	}
 
-	return ti.Tiles[(row*tileWidth)+col].ColorIndexAt(tx, ty)
+	return ti.Tiles[idx].ColorIndexAt(tx, ty)
 }
 
 func (ti *TiledImage) Set(x, y int, c color.Color) {
