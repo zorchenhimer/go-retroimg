@@ -3,8 +3,10 @@ misc/
 
 *.aseprite
 *.asm
+*.bin
 *.bmp
 *.chr
 *.exe
 *.jpg
+*.json
 *.png
