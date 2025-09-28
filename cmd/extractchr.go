@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"image/png"
 	"io"
@@ -37,29 +38,33 @@ type Segment struct {
 	Depth snesimg.BitDepth
 	Count int
 	Name string
+
+	// In tiles, not pixels
 	Width int
 	Height int
+
+	TileOrder  []int
+	Sequential bool
 }
 
 func (s Segment) String() string {
-	return fmt.Sprintf("{Segment Start:0x%X Count:0x%X (%d) Depth:%s}",
+	return fmt.Sprintf("{Segment Start:0x%X Count:0x%X (%d) Depth:%s TileOrder:%v}",
 		s.Start,
 		s.Count,
 		s.Count,
 		s.Depth,
+		s.TileOrder,
 	)
-}
-
-type Config struct {
-	Segments []CfgSegment
 }
 
 type CfgSegment struct {
 	Start string
 	Depth int
 	Count string
-	Name string
+	Name  string
 	Dimensions string // WxH: 1x1, 2x1, 1x3, 2x2, etc
+	TileOrder string // comma separated list of numbers
+	Sequential bool
 }
 
 func parseConfig(filename string) ([]Segment, error) {
@@ -69,7 +74,6 @@ func parseConfig(filename string) ([]Segment, error) {
 	}
 	defer file.Close()
 
-	//cfg := &Config{}
 	cfg := []CfgSegment{}
 	dec := json.NewDecoder(file)
 	err = dec.Decode(&cfg)
@@ -87,10 +91,6 @@ func parseConfig(filename string) ([]Segment, error) {
 		count, err := strconv.ParseInt(seg.Count, 0, 32)
 		if err != nil {
 			return nil, err
-		}
-
-		if seg.Depth != 1 && seg.Depth != 2 {
-			return nil, fmt.Errorf("Invalid depth for segment at %s: %d", seg.Start, seg.Depth)
 		}
 
 		w, h := 1, 1
@@ -118,6 +118,35 @@ func parseConfig(filename string) ([]Segment, error) {
 			w, h = int(w64), int(h64)
 		}
 
+		tileCount := w*h
+		tileOrder := []int{}
+
+		if seg.TileOrder == "" {
+			for i := 0; i < tileCount; i++ {
+				tileOrder = append(tileOrder, i+1)
+			}
+		} else {
+			orderNums := strings.Split(seg.TileOrder, ",")
+			highest := 0
+
+			for _, str := range orderNums {
+				n, err := strconv.Atoi(str)
+				if err != nil {
+					return nil, fmt.Errorf("Invalid TileOrder %q: %w", seg.TileOrder, err)
+				}
+
+				if n > highest {
+					highest = n
+				}
+				tileOrder = append(tileOrder, n)
+			}
+
+			// FIXME: do i care about repeated numbers?
+			if highest != len(tileOrder) {
+				return nil, fmt.Errorf("Invalid TileOrder %q: bad length", seg.TileOrder)
+			}
+		}
+
 		depth := snesimg.BD_2bpp
 		if seg.Depth == 1 {
 			depth = snesimg.BD_1bpp
@@ -139,6 +168,8 @@ func parseConfig(filename string) ([]Segment, error) {
 			Name: seg.Name,
 			Width: w,
 			Height: h,
+			TileOrder: tileOrder,
+			Sequential: seg.Sequential,
 		})
 	}
 
@@ -173,7 +204,7 @@ func run(args *Arguments) error {
 	}
 
 	for num, seg := range segments {
-		outname := fmt.Sprintf("%04d.png", num)
+		outname := fmt.Sprintf("%04d_%05X.png", num, seg.Start)
 		if seg.Name != "" {
 			outname = seg.Name
 		}
@@ -191,22 +222,45 @@ func run(args *Arguments) error {
 			return err
 		}
 
-		var tiles []*snesimg.Tile
-		for i := 0; i < seg.Count; i++ {
-			tile, err := raw.ReadTile(depth)
-			if err != nil {
-				return err
-			}
-			tiles = append(tiles, tile)
+		tilesPerTile := seg.Width * seg.Height
+
+		MetaImage := &snesimg.MetaImage{
+			Palette: pal,
+			Stride: 16,
 		}
 
-		img := snesimg.NewTiledImageFromTiles(depth, pal, tiles)
+		SEGLOOP:
+		for i := 0; i < seg.Count; i++ {
+			var tiles []*snesimg.Tile
+			for j := 0; j < tilesPerTile; j++ {
+				tile, err := raw.ReadTile(depth)
+				if err != nil {
+					if errors.Is(err, io.EOF) {
+						fmt.Printf("found %d tiles\n", i)
+						break SEGLOOP
+					}
+					return err
+				}
+				tiles = append(tiles, tile)
+			}
+
+			mt := snesimg.NewMetaTile(
+				tiles,
+				seg.Width,
+				seg.Height,
+				seg.TileOrder,
+				MetaImage.Palette,
+			)
+
+			MetaImage.MetaTiles = append(MetaImage.MetaTiles, mt)
+		}
+
 		output, err := os.Create(filepath.Join(args.OutDir, outname))
 		if err != nil {
 			return err
 		}
 
-		err = png.Encode(output, img)
+		err = png.Encode(output, MetaImage)
 		output.Close()
 		if err != nil {
 			return err
