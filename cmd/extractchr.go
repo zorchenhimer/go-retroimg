@@ -45,6 +45,9 @@ type Segment struct {
 
 	TileOrder  []int
 	Sequential bool
+
+	// Stride in Metatiles for the output image
+	Stride int
 }
 
 func (s Segment) String() string {
@@ -65,6 +68,7 @@ type CfgSegment struct {
 	Dimensions string // WxH: 1x1, 2x1, 1x3, 2x2, etc
 	TileOrder string // comma separated list of numbers
 	Sequential bool
+	Stride int // metatile count
 }
 
 func parseConfig(filename string) ([]Segment, error) {
@@ -161,6 +165,10 @@ func parseConfig(filename string) ([]Segment, error) {
 		seg.Name = strings.ReplaceAll(seg.Name, "{count}", seg.Count)
 		seg.Name = strings.ReplaceAll(seg.Name, "{bpp}", strconv.Itoa(seg.Depth))
 
+		if seg.Stride == 0 {
+			seg.Stride = 16
+		}
+
 		segments = append(segments, Segment{
 			Start: int(start),
 			Depth: depth,
@@ -170,6 +178,7 @@ func parseConfig(filename string) ([]Segment, error) {
 			Height: h,
 			TileOrder: tileOrder,
 			Sequential: seg.Sequential,
+			Stride: seg.Stride,
 		})
 	}
 
@@ -226,7 +235,7 @@ func run(args *Arguments) error {
 
 		MetaImage := &snesimg.MetaImage{
 			Palette: pal,
-			Stride: 16,
+			Stride: seg.Stride,
 		}
 
 		SEGLOOP:
@@ -253,6 +262,10 @@ func run(args *Arguments) error {
 			)
 
 			MetaImage.MetaTiles = append(MetaImage.MetaTiles, mt)
+		}
+
+		if len(MetaImage.MetaTiles) < MetaImage.Stride {
+			MetaImage.Stride = len(MetaImage.MetaTiles)
 		}
 
 		output, err := os.Create(filepath.Join(args.OutDir, outname))
