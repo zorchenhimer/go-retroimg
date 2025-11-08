@@ -59,7 +59,7 @@ func NewTileFromPlanes(planes [][]byte) (*Tile, error) {
 				bit := planes[p][y] & 0x01
 				planes[p][y] = planes[p][y] >> 1
 				//bit = bit << x
-				row[7-x] = (row[7-x] << 1) | bit
+				row[7-x] = row[7-x] | bit << p
 			}
 		}
 
