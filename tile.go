@@ -1,6 +1,7 @@
 package retroimg
 
 import (
+	"io"
 	"image"
 	"image/color"
 	"fmt"
@@ -152,4 +153,17 @@ func (tile *Tile) binary() []byte {
 	}
 
 	return bytes.Join(planes, []byte{})
+}
+
+type TileList []*Tile
+
+func (tl TileList) WriteChr(w io.Writer) error {
+	for _, tile := range tl {
+		_, err := w.Write(tile.binary())
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

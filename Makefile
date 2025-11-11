@@ -1,8 +1,9 @@
 
 PROGS=\
-	  bin/img2chr \
 	  bin/chr2img \
 	  bin/extractchr \
+	  bin/img2chr \
+	  bin/img2screen \
 
 all: bin/ $(PROGS)
 bin/:

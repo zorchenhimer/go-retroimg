@@ -157,6 +157,7 @@ func (ti *TiledImage) At(x, y int) color.Color {
 	tx  := x % width
 	ty  := y % height
 
+	// stride
 	tileWidth := ti.bounds.Max.X/width
 
 	return ti.Tiles[(row*tileWidth)+col].At(tx, ty)
@@ -237,4 +238,30 @@ func (ti *TiledImage) WriteBin(w io.Writer) error {
 	tiles := ti.binary()
 	_, err := w.Write(bytes.Join(tiles, []byte{}))
 	return err
+}
+
+func (ti *TiledImage) UniqueTiles() TileList {
+	ti.TileIds = []int{}
+	unique := TileList{}
+	for a, tile := range ti.Tiles {
+		found := false
+		for _, u := range ti.TileIds {
+			if tile.IsIdentical(ti.Tiles[u]) {
+				found = true
+				//fmt.Printf("%d == %d\n", a, u)
+				ti.TileIds = append(ti.TileIds, u)
+				break
+			}
+		}
+
+		if !found {
+			ti.TileIds = append(ti.TileIds, a)
+			unique = append(unique, ti.Tiles[a])
+		}
+	}
+
+	//for _, id := range ti.TileIds {
+	//	unique = append(unique, ti.Tiles[id])
+	//}
+	return unique
 }
